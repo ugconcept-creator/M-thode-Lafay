@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lafay Body">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0b0b0d">
+<title>Lafay Body — Suivi d'entraînement</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💪</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   LAFAY BODY — design tokens
+   Fond quasi-noir + accent citron fluo, inspiré des maquettes
+   fournies. Signature visuelle : anneaux de progression circulaires
+   ("la série") + pictogrammes animés au rythme d'une répétition.
+   ============================================================ */
+:root{
+  --bg:#0a0a0c;
+  --bg-soft:#101013;
+  --card:#18181c;
+  --card-2:#1e1e23;
+  --card-hi:#232329;
+  --border:rgba(255,255,255,.07);
+  --border-strong:rgba(255,255,255,.14);
+  --text:#f4f4f0;
+  --text-dim:#9b9ba3;
+  --text-faint:#6b6b73;
+  --accent:#d6ff3d;
+  --accent-dim:#a7c92f;
+  --accent-ink:#141a02;
+  --danger:#ff5d6c;
+  --danger-dim:#3a1a1e;
+  --ok:#3ddc84;
+  --push:#d6ff3d;
+  --pull:#7de1ff;
+  --legs:#ff9d5c;
+  --abs:#ff6bd6;
+  --radius-xl:26px;
+  --radius-lg:20px;
+  --radius-md:14px;
+  --radius-sm:10px;
+  --safe-t:env(safe-area-inset-top);
+  --safe-b:env(safe-area-inset-bottom);
+  --font-display:'Space Grotesk',sans-serif;
+  --font-body:'Manrope',sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);}
+body{
+  font-family:var(--font-body);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select{font-family:inherit;color:inherit;}
+button{cursor:pointer;}
+::selection{background:var(--accent);color:var(--accent-ink);}
+h1,h2,h3{margin:0;font-family:var(--font-display);}
+p{margin:0;}
+a{color:inherit;}
+input[type=number]{-moz-appearance:textfield;}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+
+#app{
+  max-width:520px;
+  margin:0 auto;
+  min-height:100vh;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(214,255,61,.07), transparent 60%),
+    var(--bg);
+  position:relative;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ---------- Header ---------- */
+header{
+  position:sticky; top:0; z-index:20;
+  padding:calc(16px + var(--safe-t)) 18px 12px;
+  background:linear-gradient(to bottom, rgba(10,10,12,.97), rgba(10,10,12,.85));
+  backdrop-filter:blur(10px);
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid var(--border);
+}
+.brand{display:flex;flex-direction:column;gap:2px;}
+.brand .kicker{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);font-weight:700;}
+.brand h1{font-size:20px;font-weight:800;letter-spacing:-.01em;}
+.brand h1 span{color:var(--accent);}
+.profile-chip{
+  display:flex;align-items:center;gap:8px;
+  background:var(--card); border:1px solid var(--border);
+  padding:6px 12px 6px 6px; border-radius:999px;
+}
+.profile-chip .avatar{
+  width:30px;height:30px;border-radius:50%;
+  background:var(--accent); color:var(--accent-ink);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px; font-weight:800;
+}
+.profile-chip .pname{font-size:13px;font-weight:700;}
+.profile-chip .chev{font-size:10px;color:var(--text-dim);}
+
+/* ---------- Main / Tabs ---------- */
+main{flex:1;padding:14px 16px calc(96px + var(--safe-b));}
+.tab{display:none;animation:fadeIn .25s ease;}
+.tab.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.section-title{
+  display:flex;align-items:baseline;justify-content:space-between;
+  margin:22px 0 10px;
+}
+.section-title h2{font-size:16px;font-weight:700;}
+.section-title .link{font-size:12px;color:var(--accent);font-weight:700;background:none;border:none;padding:0;}
+
+/* ---------- Cards / generic ---------- */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:16px;
+}
+.card + .card{margin-top:10px;}
+.row{display:flex;align-items:center;gap:10px;}
+.between{justify-content:space-between;}
+.wrap{flex-wrap:wrap;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.muted{color:var(--text-dim);}
+.faint{color:var(--text-faint);}
+.small{font-size:12px;}
+.tiny{font-size:11px;}
+.big-num{font-family:var(--font-display);font-weight:800;font-size:30px;letter-spacing:-.02em;}
+
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;font-weight:700;
+  padding:4px 9px;border-radius:999px;
+  border:1px solid var(--border);
+  color:var(--text-dim);
+  white-space:nowrap;
+}
+.badge.ready{background:rgba(61,220,132,.12);border-color:rgba(61,220,132,.35);color:var(--ok);}
+.badge.progress{background:rgba(214,255,61,.1);border-color:rgba(214,255,61,.3);color:var(--accent);}
+
+.btn{
+  border:none;border-radius:14px;
+  padding:13px 18px;font-weight:800;font-size:14px;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  transition:transform .12s ease, opacity .12s ease;
+}
+.btn:active{transform:scale(.96);}
+.btn-primary{background:var(--accent);color:var(--accent-ink);}
+.btn-ghost{background:var(--card-2);color:var(--text);border:1px solid var(--border-strong);}
+.btn-danger{background:var(--danger-dim);color:var(--danger);border:1px solid rgba(255,93,108,.3);}
+.btn-block{width:100%;}
+.btn-sm{padding:8px 12px;font-size:12px;border-radius:10px;}
+.btn:disabled{opacity:.4;pointer-events:none;}
+.icon-btn{
+  width:38px;height:38px;border-radius:12px;
+  background:var(--card-2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;
+}
+
+/* ---------- Recap tab ---------- */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px;}
+.stat-card .lbl{font-size:11px;color:var(--text-faint);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.stat-card .val{font-family:var(--font-display);font-size:24px;font-weight:800;}
+.stat-card .sub{font-size:11px;color:var(--text-dim);margin-top:2px;}
+
+.hero-boost{
+  border-radius:var(--radius-xl);
+  padding:20px;
+  background:linear-gradient(135deg, rgba(214,255,61,.14), rgba(214,255,61,.02));
+  border:1px solid rgba(214,255,61,.25);
+  position:relative; overflow:hidden;
+}
+.hero-boost .flame{font-size:26px;}
+.hero-boost h3{font-size:17px;margin:8px 0 4px;}
+.hero-boost p{font-size:13px;color:var(--text-dim);line-height:1.5;}
+
+.progress-ring-wrap{position:relative;width:64px;height:64px;flex:0 0 auto;}
+.progress-ring-wrap svg{transform:rotate(-90deg);}
+.progress-ring-wrap .ring-label{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-weight:800;font-size:13px;
+}
+
+.exo-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius-md); padding:12px 14px;
+  display:flex;align-items:center;gap:12px;
+}
+.exo-card .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+.exo-card .body{flex:1;min-width:0;}
+.exo-card .name{font-weight:700;font-size:13.5px;}
+.exo-card .lvl{font-family:var(--font-display);font-weight:800;font-size:18px;margin-top:1px;}
+.exo-card .lvl small{font-family:var(--font-body);font-weight:600;color:var(--text-dim);font-size:11px;}
+.exo-card .spark{display:flex;gap:3px;align-items:flex-end;height:24px;margin-top:6px;}
+.exo-card .spark i{width:4px;border-radius:2px;background:var(--border-strong);display:block;}
+.exo-card .spark i.ok{background:var(--ok);}
+.exo-card .spark i.ko{background:var(--danger);opacity:.6;}
+.exo-card .edit-btn{background:none;border:none;color:var(--text-faint);font-size:15px;padding:6px;}
+
+.compare-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;}
+.compare-chip{
+  flex:0 0 auto;padding:7px 12px;border-radius:999px;
+  background:var(--card-2);border:1px solid var(--border);
+  font-size:12px;font-weight:700;color:var(--text-dim);
+  display:flex;align-items:center;gap:6px;
+}
+.compare-chip.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
+
+.compare-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
+.compare-table th,.compare-table td{padding:8px 6px;text-align:left;border-bottom:1px solid var(--border);}
+.compare-table th{color:var(--text-faint);font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.05em;}
+
+/* ---------- Séances / Abdos tabs ---------- */
+.exo-select{
+  display:flex;align-items:center;gap:12px;
+  background:var(--card-2);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:12px;margin-bottom:8px;
+}
+.exo-select input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent);}
+.exo-select .info{flex:1;}
+.exo-select .info .n{font-weight:700;font-size:13.5px;}
+.exo-select .info .l{font-size:11.5px;color:var(--text-dim);}
+.dir-toggle{display:flex;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.dir-toggle button{border:none;background:none;color:var(--text-dim);font-size:11px;font-weight:800;padding:7px 9px;}
+.dir-toggle button.on{background:var(--accent);color:var(--accent-ink);}
+
+.session-hist-item{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius-md);padding:12px 14px;margin-bottom:8px;
+}
+.session-hist-item summary{list-style:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.session-hist-item summary::-webkit-details-marker{display:none;}
+.session-hist-item .sh-title{font-weight:700;font-size:13.5px;}
+.session-hist-item .sh-sub{font-size:11px;color:var(--text-faint);margin-top:2px;}
+.session-hist-item .sh-detail{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.set-pill-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+.set-pill{
+  width:26px;height:26px;border-radius:8px;font-size:11px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--card-2);border:1px solid var(--border);
+}
+.set-pill.ok{background:rgba(61,220,132,.15);color:var(--ok);border-color:rgba(61,220,132,.4);}
+.set-pill.ko{background:rgba(255,93,108,.12);color:var(--danger);border-color:rgba(255,93,108,.35);}
+
+/* ---------- Bottom nav ---------- */
+nav#bottom-nav{
+  position:fixed;left:50%;bottom:0;transform:translateX(-50%);
+  width:100%;max-width:520px;
+  padding:8px 10px calc(10px + var(--safe-b));
+  background:rgba(14,14,16,.92);backdrop-filter:blur(14px);
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  z-index:30;
+}
+.nav-btn{
+  background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;
+  color:var(--text-faint);flex:1;padding:6px 2px;font-size:9.5px;font-weight:700;
+}
+.nav-btn .ic{font-size:19px;line-height:1;}
+.nav-btn.active{color:var(--accent);}
+.nav-fab{
+  width:52px;height:52px;border-radius:50%;
+  background:var(--accent);color:var(--accent-ink);
+  display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;
+  margin-top:-26px;border:5px solid var(--bg);flex:0 0 auto;
+  box-shadow:0 6px 18px rgba(214,255,61,.35);
+}
+.nav-fab:active{transform:scale(.92);}
+
+/* ---------- Sheets / overlays ---------- */
+.overlay-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px);
+  z-index:50;opacity:0;pointer-events:none;transition:opacity .2s ease;
+}
+.overlay-bg.show{opacity:1;pointer-events:auto;}
+.sheet{
+  position:fixed;left:50%;bottom:0;transform:translate(-50%,100%);
+  width:100%;max-width:520px;max-height:86vh;overflow-y:auto;
+  background:var(--bg-soft);border:1px solid var(--border);border-bottom:none;
+  border-radius:26px 26px 0 0;
+  padding:10px 18px calc(24px + var(--safe-b));
+  z-index:51;transition:transform .28s cubic-bezier(.32,.72,0,1);
+}
+.sheet.show{transform:translate(-50%,0);}
+.sheet .handle{width:38px;height:4px;border-radius:2px;background:var(--border-strong);margin:6px auto 14px;}
+.sheet h3{font-size:17px;margin-bottom:14px;}
+
+/* ---------- Workout runner (full screen) ---------- */
+#workout-overlay{
+  position:fixed;inset:0;background:var(--bg);z-index:100;
+  display:none;flex-direction:column;
+  padding:calc(16px + var(--safe-t)) 18px calc(20px + var(--safe-b));
+}
+#workout-overlay.show{display:flex;}
+.wo-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.wo-progress-bar{height:5px;border-radius:3px;background:var(--card-2);overflow:hidden;margin:10px 0 18px;}
+.wo-progress-bar i{display:block;height:100%;background:var(--accent);transition:width .3s ease;}
+.wo-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+.wo-exo-name{font-size:13px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+.wo-set-count{font-size:15px;color:var(--accent);font-weight:800;margin-top:4px;}
+
+.exo-anim{width:150px;height:150px;margin:22px 0;position:relative;}
+.exo-anim svg{width:100%;height:100%;}
+
+.rep-target{font-family:var(--font-display);font-weight:800;font-size:74px;line-height:1;letter-spacing:-.03em;}
+.rep-target small{font-family:var(--font-body);font-size:15px;font-weight:700;color:var(--text-dim);display:block;margin-top:4px;}
+
+.stepper{display:flex;align-items:center;gap:18px;margin:22px 0;}
+.stepper button{
+  width:52px;height:52px;border-radius:16px;background:var(--card-2);border:1px solid var(--border-strong);
+  font-size:24px;font-weight:800;color:var(--text);
+}
+.stepper input{
+  width:84px;text-align:center;background:none;border:none;
+  font-family:var(--font-display);font-size:40px;font-weight:800;color:var(--text);
+}
+
+.wo-actions{display:flex;flex-direction:column;gap:10px;width:100%;}
+.wo-actions .row2{display:flex;gap:10px;}
+.wo-actions .row2 .btn{flex:1;}
+
+/* rest timer */
+.rest-ring-wrap{position:relative;width:220px;height:220px;margin:10px auto;}
+.rest-ring-wrap svg{width:100%;height:100%;transform:rotate(-90deg);}
+.rest-ring-wrap .rest-num{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.rest-ring-wrap .rest-num b{font-family:var(--font-display);font-size:52px;font-weight:800;}
+.rest-ring-wrap .rest-num span{font-size:12px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:2px;}
+
+/* pause overlay */
+#pause-overlay{
+  position:fixed;inset:0;background:rgba(10,10,12,.97);z-index:110;
+  display:none;align-items:center;justify-content:center;flex-direction:column;gap:18px;
+}
+#pause-overlay.show{display:flex;}
+
+/* summary */
+.sum-exo{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px;margin-bottom:10px;}
+.sum-exo .head{display:flex;align-items:center;justify-content:between;justify-content:space-between;margin-bottom:8px;}
+
+/* ---------- Réglages ---------- */
+.settings-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 2px;border-bottom:1px solid var(--border);
+  gap:12px;
+}
+.settings-row:last-child{border-bottom:none;}
+.settings-row .lbl{font-size:13.5px;font-weight:700;}
+.settings-row .desc{font-size:11px;color:var(--text-faint);margin-top:2px;}
+input[type=range]{accent-color:var(--accent);width:110px;}
+.num-input{
+  width:64px;background:var(--card-2);border:1px solid var(--border-strong);
+  border-radius:10px;padding:8px;text-align:center;font-weight:800;font-size:14px;
+}
+.switch{position:relative;width:44px;height:26px;flex:0 0 auto;}
+.switch input{opacity:0;width:100%;height:100%;position:absolute;margin:0;cursor:pointer;}
+.switch .track{position:absolute;inset:0;background:var(--card-2);border:1px solid var(--border-strong);border-radius:999px;transition:.2s;}
+.switch .thumb{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--text-dim);transition:.2s;}
+.switch input:checked + .track{background:rgba(214,255,61,.25);border-color:var(--accent);}
+.switch input:checked + .track + .thumb{transform:translateX(18px);background:var(--accent);}
+
+.color-dot-row{display:flex;gap:10px;}
+.color-dot{width:30px;height:30px;border-radius:50%;border:2px solid transparent;}
+.color-dot.sel{border-color:#fff;}
+
+.profile-list-item{
+  display:flex;align-items:center;gap:12px;padding:10px;border-radius:var(--radius-md);
+  background:var(--card-2);border:1px solid var(--border);margin-bottom:8px;
+}
+.profile-list-item .avatar{width:38px;height:38px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-weight:800;}
+.profile-list-item .nm{font-weight:700;font-size:13.5px;flex:1;}
+
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:11.5px;color:var(--text-dim);font-weight:700;margin-bottom:5px;}
+.field input[type=text]{
+  width:100%;background:var(--card-2);border:1px solid var(--border-strong);
+  border-radius:12px;padding:12px 14px;font-size:14px;font-weight:600;
+}
+.emoji-pick{display:flex;gap:8px;flex-wrap:wrap;}
+.emoji-pick button{width:40px;height:40px;border-radius:12px;background:var(--card-2);border:1px solid var(--border);font-size:19px;}
+.emoji-pick button.sel{border-color:var(--accent);background:rgba(214,255,61,.12);}
+
+.status-pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:6px 11px;border-radius:999px;}
+.status-pill.local{background:rgba(255,157,92,.12);color:var(--legs);border:1px solid rgba(255,157,92,.3);}
+.status-pill.cloud{background:rgba(61,220,132,.12);color:var(--ok);border:1px solid rgba(61,220,132,.3);}
+
+/* toast */
+#toast-container{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center;width:100%;pointer-events:none;}
+.toast{
+  background:var(--card-hi);border:1px solid var(--border-strong);
+  padding:11px 18px;border-radius:999px;font-size:12.5px;font-weight:700;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);
+}
+
+/* rep pacer animations (signature element) */
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+@keyframes bobLegs{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(8px) scaleY(.9)}}
+@keyframes bobPull{0%,100%{transform:translateY(0)}50%{transform:translateY(16px)}}
+@keyframes glow{0%,100%{opacity:.5}50%{opacity:1}}
+.anim-push .rig{animation:bob 1.8s ease-in-out infinite;}
+.anim-legs .rig{animation:bobLegs 1.8s ease-in-out infinite;}
+.anim-pull .rig{animation:bobPull 1.8s ease-in-out infinite;}
+.pulse-dot{animation:glow 1.8s ease-in-out infinite;}
+
+::-webkit-scrollbar{width:0;height:0;}
+
+@media (prefers-reduced-motion: reduce){
+  .anim-push .rig,.anim-legs .rig,.anim-pull .rig,.pulse-dot{animation:none;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <div class="brand">
+      <span class="kicker">Programme</span>
+      <h1>Lafay<span>Body</span></h1>
+    </div>
+    <button class="profile-chip" id="btn-open-profile">
+      <span class="avatar" id="hdr-avatar">–</span>
+      <span class="pname" id="hdr-pname">…</span>
+      <span class="chev">▾</span>
+    </button>
+  </header>
+
+  <main>
+    <!-- ===================== RECAP ===================== -->
+    <section class="tab active" id="tab-recap">
+      <div class="hero-boost" id="boost-card">
+        <div class="flame">🔥</div>
+        <h3 id="boost-title">On y va !</h3>
+        <p id="boost-text">Chargement…</p>
+      </div>
+
+      <div class="section-title"><h2>Cette période</h2></div>
+      <div class="stat-grid" id="recap-stats"></div>
+
+      <div class="section-title">
+        <h2>Comparer les profils</h2>
+        <button class="link" id="btn-toggle-compare">Comparer</button>
+      </div>
+      <div class="compare-row" id="compare-chips"></div>
+      <table class="compare-table" id="compare-table" style="display:none"></table>
+
+      <div class="section-title"><h2>Progression — Lafay</h2></div>
+      <div id="recap-exo-list"></div>
+
+      <div class="section-title"><h2>Progression — Abdos</h2></div>
+      <div id="recap-abs-list"></div>
+    </section>
+
+    <!-- ===================== SEANCES ===================== -->
+    <section class="tab" id="tab-seances">
+      <div class="section-title"><h2>Ton niveau actuel</h2></div>
+      <div id="seances-progress"></div>
+
+      <button class="btn btn-primary btn-block" style="margin-top:16px" id="btn-new-session">➕ Nouvelle séance Lafay</button>
+
+      <div class="section-title"><h2>Historique des séances</h2></div>
+      <div id="seances-history"></div>
+    </section>
+
+    <!-- ===================== ABDOS ===================== -->
+    <section class="tab" id="tab-abdos">
+      <div class="section-title"><h2>Module Abdos</h2></div>
+      <p class="muted small" style="margin-bottom:10px">Complète ton programme Lafay quand tu veux, sans impacter ta progression.</p>
+      <button class="btn btn-primary btn-block" id="btn-new-abs">➕ Nouvelle séance Abdos</button>
+
+      <div class="section-title"><h2>Historique Abdos</h2></div>
+      <div id="abs-history"></div>
+    </section>
+
+    <!-- ===================== REGLAGES ===================== -->
+    <section class="tab" id="tab-reglages">
+      <div class="section-title"><h2>Profils</h2></div>
+      <div id="settings-profiles"></div>
+      <button class="btn btn-ghost btn-block" id="btn-add-profile">➕ Ajouter un profil</button>
+
+      <div class="section-title"><h2>Paramètres séance Lafay</h2></div>
+      <div class="card">
+        <div class="settings-row">
+          <div><div class="lbl">Temps de repos</div><div class="desc">Entre chaque série</div></div>
+          <div class="row"><input type="range" id="set-rest" min="10" max="240" step="5"><span id="set-rest-val" class="tiny" style="width:44px;text-align:right"></span></div>
+        </div>
+        <div class="settings-row">
+          <div><div class="lbl">Séries par exercice</div></div>
+          <input type="number" class="num-input" id="set-nbsets" min="1" max="12">
+        </div>
+      </div>
+
+      <div class="section-title"><h2>Paramètres séance Abdos</h2></div>
+      <div class="card">
+        <div class="settings-row">
+          <div><div class="lbl">Temps de repos</div></div>
+          <div class="row"><input type="range" id="set-rest-abs" min="10" max="180" step="5"><span id="set-rest-abs-val" class="tiny" style="width:44px;text-align:right"></span></div>
+        </div>
+        <div class="settings-row">
+          <div><div class="lbl">Séries par exercice</div></div>
+          <input type="number" class="num-input" id="set-nbsets-abs" min="1" max="12">
+        </div>
+      </div>
+
+      <div class="section-title"><h2>Son & apparence</h2></div>
+      <div class="card">
+        <div class="settings-row">
+          <div><div class="lbl">Bip sonore</div><div class="desc">5 sec avant la fin du repos</div></div>
+          <label class="switch"><input type="checkbox" id="set-sound"><span class="track"></span><span class="thumb"></span></label>
+        </div>
+        <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:10px">
+          <div class="lbl">Couleur d'accent</div>
+          <div class="color-dot-row" id="accent-picker"></div>
+        </div>
+      </div>
+
+      <div class="section-title"><h2>Données</h2></div>
+      <div class="card">
+        <div class="settings-row">
+          <div><div class="lbl">Stockage</div><div class="desc" id="storage-desc">…</div></div>
+          <span class="status-pill" id="storage-pill">…</span>
+        </div>
+        <div class="settings-row">
+          <div class="lbl">Exporter mes données (JSON)</div>
+          <button class="btn btn-ghost btn-sm" id="btn-export">Exporter</button>
+        </div>
+        <div class="settings-row">
+          <div class="lbl">Réinitialiser la progression</div>
+          <button class="btn btn-danger btn-sm" id="btn-reset-progress">Réinitialiser</button>
+        </div>
+      </div>
+      <p class="faint tiny" style="margin-top:18px;line-height:1.5">Lafay Body · basé sur la méthode de musculation au poids de corps d'Olivier Lafay. Cette application n'est pas affiliée à l'auteur.</p>
+    </section>
+  </main>
+
+  <nav id="bottom-nav">
+    <button class="nav-btn active" data-tab="recap"><span class="ic">📊</span>Récap</button>
+    <button class="nav-btn" data-tab="seances"><span class="ic">🏋️</span>Séances</button>
+    <button class="nav-fab" id="fab-quick-start">+</button>
+    <button class="nav-btn" data-tab="abdos"><span class="ic">🔥</span>Abdos</button>
+    <button class="nav-btn" data-tab="reglages"><span class="ic">⚙️</span>Réglages</button>
+  </nav>
+
+  <div class="overlay-bg" id="overlay-bg"></div>
+
+  <!-- Profile switch sheet -->
+  <div class="sheet" id="sheet-profile">
+    <div class="handle"></div>
+    <h3>Changer de profil</h3>
+    <div id="profile-switch-list"></div>
+    <button class="btn btn-ghost btn-block" id="btn-create-profile-inline" style="margin-top:10px">➕ Nouveau profil</button>
+  </div>
+
+  <!-- New profile sheet -->
+  <div class="sheet" id="sheet-new-profile">
+    <div class="handle"></div>
+    <h3>Nouveau profil</h3>
+    <div class="field">
+      <label>Prénom</label>
+      <input type="text" id="np-name" placeholder="Ex : Lester">
+    </div>
+    <div class="field">
+      <label>Emoji</label>
+      <div class="emoji-pick" id="np-emoji"></div>
+    </div>
+    <button class="btn btn-primary btn-block" id="np-confirm">Créer le profil</button>
+  </div>
+
+  <!-- New Lafay session sheet -->
+  <div class="sheet" id="sheet-new-session">
+    <div class="handle"></div>
+    <h3>Choisir les exercices</h3>
+    <div id="ns-list"></div>
+    <button class="btn btn-primary btn-block" id="ns-start" style="margin-top:12px">Commencer la séance 🔥</button>
+  </div>
+
+  <!-- New Abs session sheet -->
+  <div class="sheet" id="sheet-new-abs">
+    <div class="handle"></div>
+    <h3>Choisir les exercices d'abdos</h3>
+    <div id="nabs-list"></div>
+    <button class="btn btn-primary btn-block" id="nabs-start" style="margin-top:12px">Commencer 🔥</button>
+  </div>
+
+  <!-- Edit level sheet -->
+  <div class="sheet" id="sheet-edit-level">
+    <div class="handle"></div>
+    <h3 id="el-title">Modifier le niveau</h3>
+    <div class="stepper" style="justify-content:center">
+      <button id="el-minus">−</button>
+      <input type="number" id="el-value">
+      <button id="el-plus">+</button>
+    </div>
+    <button class="btn btn-primary btn-block" id="el-save">Enregistrer</button>
+  </div>
+
+  <!-- ===================== WORKOUT RUNNER ===================== -->
+  <div id="workout-overlay">
+    <div class="wo-top">
+      <button class="icon-btn" id="wo-pause">⏸</button>
+      <span class="tiny muted" id="wo-header-label">Séance en cours</span>
+      <button class="icon-btn" id="wo-quit">✕</button>
+    </div>
+    <div class="wo-progress-bar"><i id="wo-progress-fill" style="width:0%"></i></div>
+
+    <div class="wo-body" id="wo-set-view">
+      <div class="wo-exo-name" id="wo-exo-name">—</div>
+      <div class="wo-set-count" id="wo-set-count">Série 1/6</div>
+      <div class="exo-anim" id="wo-anim"></div>
+      <div class="rep-target"><span id="wo-target">0</span><small>répétitions visées</small></div>
+
+      <div class="stepper">
+        <button id="wo-rep-minus">−</button>
+        <input type="number" id="wo-rep-input" value="0">
+        <button id="wo-rep-plus">+</button>
+      </div>
+    </div>
+
+    <div class="wo-body" id="wo-rest-view" style="display:none">
+      <div class="wo-exo-name">Repos</div>
+      <div class="rest-ring-wrap">
+        <svg viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="88" stroke="var(--card-2)" stroke-width="12" fill="none"/>
+          <circle id="rest-ring-fg" cx="100" cy="100" r="88" stroke="var(--accent)" stroke-width="12" fill="none" stroke-linecap="round"/>
+        </svg>
+        <div class="rest-num"><b id="rest-seconds">90</b><span>secondes</span></div>
+      </div>
+      <p class="muted small" id="rest-next-label">Prochaine série...</p>
+    </div>
+
+    <div class="wo-actions">
+      <div id="wo-actions-set">
+        <button class="btn btn-primary btn-block" id="wo-validate-set">Valider la série ✅</button>
+      </div>
+      <div id="wo-actions-rest" class="row2" style="display:none">
+        <button class="btn btn-ghost" id="wo-skip-rest">Passer ⏭</button>
+        <button class="btn btn-primary" id="wo-add-rest">+15s</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pause overlay -->
+  <div id="pause-overlay">
+    <div style="font-size:44px">⏸</div>
+    <h2 style="font-size:20px">Séance en pause</h2>
+    <p class="muted small">Prends ton temps.</p>
+    <button class="btn btn-primary" id="btn-resume-session">Reprendre ▶</button>
+    <button class="btn btn-ghost" id="btn-abandon-session">Abandonner la séance</button>
+  </div>
+
+  <!-- Session summary sheet -->
+  <div class="sheet" id="sheet-summary">
+    <div class="handle"></div>
+    <h3>Bilan de la séance 🎉</h3>
+    <div id="summary-content"></div>
+    <button class="btn btn-primary btn-block" id="summary-save" style="margin-top:6px">Enregistrer la séance</button>
+  </div>
+
+  <div id="toast-container"></div>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script>
+/* ================================================================
+   LAFAY BODY — application logic
+   Fonctionne en mode 100% local (localStorage) tant que Supabase
+   n'est pas configuré ci-dessous. Dès que SUPABASE_URL / ANON_KEY
+   sont renseignées, les données sont synchronisées dans le cloud
+   (voir schema.sql fourni à côté de ce fichier).
+   ================================================================ */
+
+// ---------------------------------------------------------------
+// 0. CONFIG SUPABASE — remplace ces deux valeurs après avoir créé
+//    ton projet sur https://supabase.com puis exécuté schema.sql
+// ---------------------------------------------------------------
+const SUPABASE_URL = "https://pbfsiogaflwuvdhrmewv.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZnNpb2dhZmx3dXZkaHJtZXd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5NTY2NTcsImV4cCI6MjA5ODUzMjY1N30.CvOXH_7m6fAXv7IS-fd68rGEsh4J0NY1YNYihZmDmM4
+";
+
+let supa = null;
+let USE_SUPABASE = false;
+try{
+  if(window.supabase && SUPABASE_URL.indexOf('supabase.co') > -1 && SUPABASE_ANON_KEY && SUPABASE_ANON_KEY.length > 20){
+    supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    USE_SUPABASE = true;
+  }
+}catch(e){ console.warn('Supabase indisponible, mode local activé.', e); }
+
+// ---------------------------------------------------------------
+// 1. CONSTANTES
+// ---------------------------------------------------------------
+const LAFAY_EXERCISES = [
+  {key:'pompes_droites',   name:'Pompes droites',    emoji:'🤸', group:'push', start:5},
+  {key:'pompes_declinees', name:'Pompes déclinées',  emoji:'🤸', group:'push', start:4},
+  {key:'pompes_inclinees', name:'Pompes inclinées',  emoji:'🤸', group:'push', start:8},
+  {key:'dips',             name:'Dips',               emoji:'🔻', group:'push', start:3},
+  {key:'traction',         name:'Tractions',          emoji:'🔺', group:'pull', start:1},
+  {key:'squat',            name:'Squats',             emoji:'🦵', group:'legs', start:10},
+  {key:'fentes',           name:'Fentes',             emoji:'🦵', group:'legs', start:8},
+];
+const GROUP_COLOR = {push:'var(--push)', pull:'var(--pull)', legs:'var(--legs)'};
+
+const ABS_EXERCISES = [
+  {key:'crunch',            name:'Crunch',              unit:'reps', emoji:'🔥'},
+  {key:'releve_jambes',     name:'Relevé de jambes',    unit:'reps', emoji:'🔥'},
+  {key:'planche',           name:'Planche (gainage)',   unit:'sec',  emoji:'⏱️'},
+  {key:'gainage_lateral',   name:'Gainage latéral',     unit:'sec',  emoji:'⏱️'},
+  {key:'mountain_climber',  name:'Mountain climbers',   unit:'reps', emoji:'🔥'},
+  {key:'russian_twist',     name:'Russian twist',       unit:'reps', emoji:'🔥'},
+];
+
+const DEFAULT_SETTINGS = {
+  restTime: 90,
+  restTimeAbs: 45,
+  setsTarget: 6,
+  setsTargetAbs: 3,
+  soundOn: true,
+  accent: '#d6ff3d',
+};
+const ACCENT_CHOICES = ['#d6ff3d','#7de1ff','#ff9d5c','#ff6bd6','#3ddc84','#ffd23d'];
+const EMOJI_CHOICES = ['💪','🔥','🏋️','🦾','⚡','🐆','🦍','🚀','🎯','🥇'];
+
+// ---------------------------------------------------------------
+// 2. STOCKAGE (Supabase si configuré, sinon localStorage)
+// ---------------------------------------------------------------
+const LOCAL_KEY = 'lafay_local_db_v1';
+function loadLocalDB(){
+  try{ return JSON.parse(localStorage.getItem(LOCAL_KEY)) || {profiles:[],progress:[],sessions:[]}; }
+  catch(e){ return {profiles:[],progress:[],sessions:[]}; }
+}
+function saveLocalDB(db){ localStorage.setItem(LOCAL_KEY, JSON.stringify(db)); }
+function uid(){ return (crypto.randomUUID ? crypto.randomUUID() : 'id-'+Date.now()+'-'+Math.random().toString(16).slice(2)); }
+
+const DB = {
+  async listProfiles(){
+    if(USE_SUPABASE){
+      const {data,error} = await supa.from('profiles').select('*').order('created_at');
+      if(error) throw error;
+      return data;
+    }
+    return loadLocalDB().profiles;
+  },
+  async createProfile(name, emoji){
+    const profile = {id: uid(), name, emoji: emoji||'💪', settings:{...DEFAULT_SETTINGS}, created_at:new Date().toISOString()};
+    if(USE_SUPABASE){
+      const {data,error} = await supa.from('profiles').insert(profile).select().single();
+      if(error) throw error;
+      return data;
+    }
+    const db = loadLocalDB(); db.profiles.push(profile); saveLocalDB(db);
+    return profile;
+  },
+  async updateProfile(id, patch){
+    if(USE_SUPABASE){
+      const {data,error} = await supa.from('profiles').update(patch).eq('id',id).select().single();
+      if(error) throw error;
+      return data;
+    }
+    const db = loadLocalDB();
+    const p = db.profiles.find(p=>p.id===id);
+    if(p) Object.assign(p, patch);
+    saveLocalDB(db);
+    return p;
+  },
+  async deleteProfile(id){
+    if(USE_SUPABASE){
+      await supa.from('sessions').delete().eq('profile_id', id);
+      await supa.from('progress').delete().eq('profile_id', id);
+      await supa.from('profiles').delete().eq('id', id);
+      return;
+    }
+    const db = loadLocalDB();
+    db.profiles = db.profiles.filter(p=>p.id!==id);
+    db.progress = db.progress.filter(p=>p.profile_id!==id);
+    db.sessions = db.sessions.filter(s=>s.profile_id!==id);
+    saveLocalDB(db);
+  },
+  async getProgress(profileId){
+    if(USE_SUPABASE){
+      const {data,error} = await supa.from('progress').select('*').eq('profile_id',profileId);
+      if(error) throw error;
+      return data;
+    }
+    return loadLocalDB().progress.filter(p=>p.profile_id===profileId);
+  },
+  async upsertProgress(profileId, exerciseKey, patch){
+    if(USE_SUPABASE){
+      const {data,error} = await supa.from('progress')
+        .upsert({profile_id:profileId, exercise_key:exerciseKey, ...patch, updated_at:new Date().toISOString()}, {onConflict:'profile_id,exercise_key'})
+        .select().single();
+      if(error) throw error;
+      return data;
+    }
+    const db = loadLocalDB();
+    let row = db.progress.find(p=>p.profile_id===profileId && p.exercise_key===exerciseKey);
+    if(!row){ row = {id:uid(), profile_id:profileId, exercise_key:exerciseKey}; db.progress.push(row); }
+    Object.assign(row, patch, {updated_at:new Date().toISOString()});
+    saveLocalDB(db);
+    return row;
+  },
+  async listSessions(profileId){
+    if(USE_SUPABASE){
+      const {data,error} = await supa.from('sessions').select('*').eq('profile_id',profileId).order('started_at',{ascending:false});
+      if(error) throw error;
+      return data;
+    }
+    return loadLocalDB().sessions.filter(s=>s.profile_id===profileId)
+      .sort((a,b)=> new Date(b.started_at)-new Date(a.started_at));
+  },
+  async addSession(session){
+    if(USE_SUPABASE){
+      const {data,error} = await supa.from('sessions').insert(session).select().single();
+      if(error) throw error;
+      return data;
+    }
+    const db = loadLocalDB();
+    session.id = uid();
+    db.sessions.push(session);
+    saveLocalDB(db);
+    return session;
+  }
+};
+
+// ---------------------------------------------------------------
+// 3. STATE
+// ---------------------------------------------------------------
+const state = {
+  profiles: [],
+  currentProfile: null,
+  progress: {},      // exercise_key -> row {current_reps, ready, ...}
+  absProgress: {},   // abs exercise_key -> {best, total}
+  sessions: [],
+  compareMode: false,
+  compareIds: [],
+  compareCache: {},  // profileId -> {sessions,progress}
+  activeSession: null,
+  editingLevel: null,
+};
+
+// ---------------------------------------------------------------
+// 4. UTILITAIRES
+// ---------------------------------------------------------------
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+function el(html){ const d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstElementChild; }
+
+function toast(msg){
+  const t = el(`<div class="toast">${msg}</div>`);
+  $('#toast-container').appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); }, 2200);
+}
+
+function fmtDate(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR', {day:'2-digit', month:'short', year:'numeric'});
+}
+function fmtDateShort(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR', {day:'2-digit', month:'short'});
+}
+function daysAgo(iso){
+  const diff = Date.now() - new Date(iso).getTime();
+  return Math.floor(diff/86400000);
+}
+function isSameWeek(iso){
+  const d = new Date(iso), now = new Date();
+  const dOnset = new Date(now); dOnset.setDate(now.getDate() - ((now.getDay()+6)%7));
+  dOnset.setHours(0,0,0,0);
+  return d >= dOnset;
+}
+function isSameMonth(iso){
+  const d = new Date(iso), now = new Date();
+  return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+}
+
+function applyAccent(color){
+  document.documentElement.style.setProperty('--accent', color);
+}
+
+// beep via Web Audio (aucun fichier externe nécessaire)
+let audioCtx = null;
+function beep(freq, dur){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine'; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.35, audioCtx.currentTime+0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur/1000);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + dur/1000 + 0.02);
+  }catch(e){ /* audio indisponible */ }
+}
+function playWarnBeep(){ if(getSettings().soundOn){ beep(880,150); setTimeout(()=>beep(880,150),220); } }
+function playGoBeep(){ if(getSettings().soundOn){ beep(1320,220); } }
+
+function getSettings(){
+  return state.currentProfile ? {...DEFAULT_SETTINGS, ...(state.currentProfile.settings||{})} : DEFAULT_SETTINGS;
+}
+async function patchSettings(partial){
+  const settings = {...getSettings(), ...partial};
+  state.currentProfile.settings = settings;
+  await DB.updateProfile(state.currentProfile.id, {settings});
+  applyAccent(settings.accent);
+  renderReglages();
+}
+
+// ---------------------------------------------------------------
+// 5. CHARGEMENT DES DONNEES
+// ---------------------------------------------------------------
+async function loadProfileData(){
+  if(!state.currentProfile) return;
+  localStorage.setItem('lafay_current_profile', state.currentProfile.id);
+  const settings = {...DEFAULT_SETTINGS, ...(state.currentProfile.settings||{})};
+  state.currentProfile.settings = settings;
+  applyAccent(settings.accent);
+
+  const rows = await DB.getProgress(state.currentProfile.id);
+  state.progress = {};
+  LAFAY_EXERCISES.forEach(ex=>{
+    const row = rows.find(r=>r.exercise_key===ex.key);
+    state.progress[ex.key] = row ? {...row} : {profile_id:state.currentProfile.id, exercise_key:ex.key, current_reps:ex.start, ready:false};
+  });
+
+  state.sessions = await DB.listSessions(state.currentProfile.id);
+  computeAbsProgress();
+}
+
+function computeAbsProgress(){
+  state.absProgress = {};
+  ABS_EXERCISES.forEach(ex=>{ state.absProgress[ex.key] = {total:0, best:0, count:0}; });
+  state.sessions.filter(s=>s.type==='abdos').forEach(s=>{
+    (s.exercises||[]).forEach(exResult=>{
+      const agg = state.absProgress[exResult.key];
+      if(!agg) return;
+      (exResult.sets||[]).forEach(st=>{
+        agg.total += (st.value||0);
+        agg.best = Math.max(agg.best, st.value||0);
+        agg.count++;
+      });
+    });
+  });
+}
+
+function lafaySessions(){ return state.sessions.filter(s=>s.type==='lafay'); }
+function absSessions(){ return state.sessions.filter(s=>s.type==='abdos'); }
+
+function totalRepsFor(exerciseKey){
+  let total = 0;
+  lafaySessions().forEach(s=>{
+    (s.exercises||[]).forEach(r=>{
+      if(r.key===exerciseKey){ (r.sets||[]).forEach(st=> total += (st.reps||0)); }
+    });
+  });
+  return total;
+}
+
+function lastSessionsResultsFor(exerciseKey, n){
+  const out = [];
+  for(const s of lafaySessions()){
+    const r = (s.exercises||[]).find(e=>e.key===exerciseKey);
+    if(r){ out.push(r); if(out.length>=n) break; }
+  }
+  return out.reverse();
+}
+
+// ---------------------------------------------------------------
+// 6. RENDER : HEADER
+// ---------------------------------------------------------------
+function renderHeader(){
+  if(!state.currentProfile) return;
+  $('#hdr-avatar').textContent = state.currentProfile.emoji || '💪';
+  $('#hdr-pname').textContent = state.currentProfile.name;
+}
+
+// ---------------------------------------------------------------
+// 7. RENDER : RECAP
+// ---------------------------------------------------------------
+function renderRecap(){
+  if(!state.currentProfile) return;
+  const all = lafaySessions();
+  const abs = absSessions();
+  const total = state.sessions.length;
+  const thisMonth = state.sessions.filter(s=>isSameMonth(s.started_at)).length;
+  const thisWeek = state.sessions.filter(s=>isSameWeek(s.started_at)).length;
+  const last = state.sessions[0];
+
+  $('#recap-stats').innerHTML = `
+    <div class="stat-card"><div class="lbl">Séances totales</div><div class="val">${total}</div><div class="sub">${all.length} Lafay · ${abs.length} Abdos</div></div>
+    <div class="stat-card"><div class="lbl">Ce mois-ci</div><div class="val">${thisMonth}</div><div class="sub">séance${thisMonth>1?'s':''}</div></div>
+    <div class="stat-card"><div class="lbl">Cette semaine</div><div class="val">${thisWeek}</div><div class="sub">séance${thisWeek>1?'s':''}</div></div>
+    <div class="stat-card"><div class="lbl">Dernière séance</div><div class="val">${last? daysAgo(last.started_at)+'j' : '—'}</div><div class="sub">${last? fmtDateShort(last.started_at) : 'aucune'}</div></div>
+  `;
+
+  // boost message
+  let title, text;
+  if(!last){
+    title = 'Prêt à démarrer 💥';
+    text = "Aucune séance enregistrée pour l'instant. Lance ta première séance depuis l'onglet Séances !";
+  } else {
+    const d = daysAgo(last.started_at);
+    if(thisWeek>=3){ title='En feu cette semaine 🔥'; text=`${thisWeek} séances déjà cette semaine, ta progression s'accélère. Continue comme ça !`; }
+    else if(d===0){ title='Séance du jour dans la poche ✅'; text="Belle séance aujourd'hui. Pense à bien récupérer avant la prochaine."; }
+    else if(d>=5){ title='On retourne s\'entraîner ? 💪'; text=`Ta dernière séance remonte à ${d} jours. Une petite séance aujourd'hui te ferait du bien.`; }
+    else { title='Bonne dynamique 👊'; text=`Dernière séance il y a ${d} jour${d>1?'s':''}. Garde le rythme !`; }
+  }
+  $('#boost-title').textContent = title;
+  $('#boost-text').textContent = text;
+
+  renderCompareChips();
+  renderExoRecapList();
+  renderAbsRecapList();
+}
+
+function renderCompareChips(){
+  const wrap = $('#compare-chips');
+  wrap.style.display = state.compareMode ? 'flex' : 'none';
+  $('#compare-table').style.display = state.compareMode ? 'table' : 'none';
+  if(!state.compareMode) return;
+  wrap.innerHTML = state.profiles.map(p=>{
+    const active = state.compareIds.includes(p.id);
+    return `<button class="compare-chip ${active?'active':''}" data-pid="${p.id}">${p.emoji||'💪'} ${p.name}</button>`;
+  }).join('');
+  wrap.querySelectorAll('.compare-chip').forEach(btn=>{
+    btn.onclick = async ()=>{
+      const pid = btn.dataset.pid;
+      if(state.compareIds.includes(pid)) state.compareIds = state.compareIds.filter(x=>x!==pid);
+      else state.compareIds.push(pid);
+      await refreshCompareTable();
+    };
+  });
+  refreshCompareTable();
+}
+
+async function refreshCompareTable(){
+  renderCompareChips.busy = true;
+  const table = $('#compare-table');
+  if(state.compareIds.length===0){ table.innerHTML=''; return; }
+  for(const pid of state.compareIds){
+    if(!state.compareCache[pid]){
+      const [sessions, progress] = await Promise.all([DB.listSessions(pid), DB.getProgress(pid)]);
+      state.compareCache[pid] = {sessions, progress};
+    }
+  }
+  let rows = `<tr><th>Profil</th><th>Séances</th><th>Dernière</th>${LAFAY_EXERCISES.map(e=>`<th>${e.emoji}</th>`).join('')}</tr>`;
+  state.compareIds.forEach(pid=>{
+    const p = state.profiles.find(pp=>pp.id===pid);
+    const c = state.compareCache[pid];
+    if(!p||!c) return;
+    const last = c.sessions[0];
+    rows += `<tr><td><b>${p.emoji} ${p.name}</b></td><td>${c.sessions.length}</td><td>${last?fmtDateShort(last.started_at):'—'}</td>`;
+    LAFAY_EXERCISES.forEach(ex=>{
+      const row = c.progress.find(r=>r.exercise_key===ex.key);
+      rows += `<td>${row? row.current_reps : ex.start}</td>`;
+    });
+    rows += '</tr>';
+  });
+  table.innerHTML = rows;
+  // re-render again if chips changed mid-await
+  const wrap = $('#compare-chips');
+  wrap.querySelectorAll('.compare-chip').forEach(btn=>{
+    btn.classList.toggle('active', state.compareIds.includes(btn.dataset.pid));
+  });
+}
+
+function sparkline(sets){
+  if(!sets || sets.length===0) return '';
+  return sets.map(s=>`<i class="${s.success?'ok':'ko'}" style="height:${8 + Math.min(16, (s.reps||0))}px"></i>`).join('');
+}
+
+function renderExoRecapList(){
+  $('#recap-exo-list').innerHTML = LAFAY_EXERCISES.map(ex=>{
+    const prog = state.progress[ex.key];
+    const lastResults = lastSessionsResultsFor(ex.key, 8);
+    const lastSets = lastResults.length ? lastResults[lastResults.length-1].sets : [];
+    const total = totalRepsFor(ex.key);
+    return `
+      <div class="exo-card">
+        <div class="dot" style="background:${GROUP_COLOR[ex.group]}"></div>
+        <div class="body">
+          <div class="row between">
+            <span class="name">${ex.emoji} ${ex.name}</span>
+            ${prog.ready ? '<span class="badge ready">✅ prêt à monter</span>' : '<span class="badge progress">🔄 en cours</span>'}
+          </div>
+          <div class="lvl">${prog.current_reps} <small>reps × ${getSettings().setsTarget} séries</small></div>
+          <div class="spark">${sparkline(lastSets)}</div>
+          <div class="tiny faint" style="margin-top:4px">${total} répétitions au total</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderAbsRecapList(){
+  $('#recap-abs-list').innerHTML = ABS_EXERCISES.map(ex=>{
+    const agg = state.absProgress[ex.key] || {total:0,best:0,count:0};
+    return `
+      <div class="exo-card">
+        <div class="dot" style="background:var(--abs)"></div>
+        <div class="body">
+          <div class="row between"><span class="name">${ex.emoji} ${ex.name}</span></div>
+          <div class="lvl">${agg.best || 0} <small>${ex.unit==='sec'?'sec max':'reps max'}</small></div>
+          <div class="tiny faint" style="margin-top:4px">${agg.total} ${ex.unit==='sec'?'sec':'reps'} cumulées</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ---------------------------------------------------------------
+// 8. RENDER : SEANCES
+// ---------------------------------------------------------------
+function renderSeances(){
+  if(!state.currentProfile) return;
+  $('#seances-progress').innerHTML = LAFAY_EXERCISES.map(ex=>{
+    const prog = state.progress[ex.key];
+    const lastResults = lastSessionsResultsFor(ex.key, 8);
+    const lastSets = lastResults.length ? lastResults[lastResults.length-1].sets : [];
+    return `
+      <div class="exo-card">
+        <div class="dot" style="background:${GROUP_COLOR[ex.group]}"></div>
+        <div class="body">
+          <div class="row between">
+            <span class="name">${ex.emoji} ${ex.name}</span>
+            ${prog.ready ? '<span class="badge ready">✅ prêt</span>' : '<span class="badge progress">🔄</span>'}
+          </div>
+          <div class="lvl">${prog.current_reps} <small>reps × ${getSettings().setsTarget}</small></div>
+          <div class="spark">${sparkline(lastSets)}</div>
+        </div>
+        <button class="edit-btn" data-key="${ex.key}" data-kind="lafay">✏️</button>
+      </div>`;
+  }).join('');
+  $all('#seances-progress .edit-btn').forEach(b=> b.onclick = ()=> openEditLevel(b.dataset.key, 'lafay'));
+
+  renderSeancesHistory();
+}
+
+function renderSeancesHistory(){
+  const wrap = $('#seances-history');
+  const list = lafaySessions();
+  if(list.length===0){ wrap.innerHTML = '<p class="muted small">Aucune séance pour l\'instant.</p>'; return; }
+  wrap.innerHTML = list.map(s=>{
+    const dur = s.duration_sec ? Math.round(s.duration_sec/60)+' min' : '';
+    const names = (s.exercises||[]).map(e=>{
+      const def = LAFAY_EXERCISES.find(x=>x.key===e.key);
+      return def ? def.emoji : '';
+    }).join(' ');
+    return `
+      <details class="session-hist-item">
+        <summary>
+          <div>
+            <div class="sh-title">${fmtDate(s.started_at)} ${names}</div>
+            <div class="sh-sub">${(s.exercises||[]).length} exercice(s) ${dur?'· '+dur:''}</div>
+          </div>
+          <span class="faint">▾</span>
+        </summary>
+        <div class="sh-detail">
+          ${(s.exercises||[]).map(e=>{
+            const def = LAFAY_EXERCISES.find(x=>x.key===e.key);
+            return `<div style="margin-bottom:8px">
+              <div class="small" style="font-weight:700">${def?def.emoji:''} ${def?def.name:e.key} — cible ${e.target_reps} reps ${e.direction==='increase'?'(➕1)':''}</div>
+              <div class="set-pill-row">${(e.sets||[]).map(st=>`<span class="set-pill ${st.success?'ok':'ko'}">${st.reps}</span>`).join('')}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </details>`;
+  }).join('');
+}
+
+// ---------------------------------------------------------------
+// 9. RENDER : ABDOS
+// ---------------------------------------------------------------
+function renderAbdos(){
+  renderAbsHistory();
+}
+function renderAbsHistory(){
+  const wrap = $('#abs-history');
+  const list = absSessions();
+  if(list.length===0){ wrap.innerHTML = '<p class="muted small">Aucune séance d\'abdos pour l\'instant.</p>'; return; }
+  wrap.innerHTML = list.map(s=>{
+    const names = (s.exercises||[]).map(e=>{
+      const def = ABS_EXERCISES.find(x=>x.key===e.key);
+      return def ? def.emoji : '';
+    }).join(' ');
+    return `
+      <details class="session-hist-item">
+        <summary>
+          <div>
+            <div class="sh-title">${fmtDate(s.started_at)} ${names}</div>
+            <div class="sh-sub">${(s.exercises||[]).length} exercice(s)</div>
+          </div>
+          <span class="faint">▾</span>
+        </summary>
+        <div class="sh-detail">
+          ${(s.exercises||[]).map(e=>{
+            const def = ABS_EXERCISES.find(x=>x.key===e.key);
+            return `<div style="margin-bottom:8px">
+              <div class="small" style="font-weight:700">${def?def.emoji:''} ${def?def.name:e.key}</div>
+              <div class="set-pill-row">${(e.sets||[]).map(st=>`<span class="set-pill ok">${st.value}${def&&def.unit==='sec'?'s':''}</span>`).join('')}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </details>`;
+  }).join('');
+}
+
+// ---------------------------------------------------------------
+// 10. RENDER : REGLAGES
+// ---------------------------------------------------------------
+function renderReglages(){
+  if(!state.currentProfile) return;
+  const s = getSettings();
+
+  $('#settings-profiles').innerHTML = state.profiles.map(p=>`
+    <div class="profile-list-item">
+      <span class="avatar">${p.emoji||'💪'}</span>
+      <span class="nm">${p.name}${p.id===state.currentProfile.id?' (actif)':''}</span>
+      <button class="btn btn-ghost btn-sm" data-select="${p.id}">Choisir</button>
+      <button class="icon-btn" data-del="${p.id}" style="width:34px;height:34px;font-size:13px">🗑</button>
+    </div>`).join('');
+  $all('#settings-profiles [data-select]').forEach(b=> b.onclick = ()=> switchProfile(b.dataset.select));
+  $all('#settings-profiles [data-del]').forEach(b=> b.onclick = ()=> deleteProfileFlow(b.dataset.del));
+
+  $('#set-rest').value = s.restTime; $('#set-rest-val').textContent = s.restTime+'s';
+  $('#set-nbsets').value = s.setsTarget;
+  $('#set-rest-abs').value = s.restTimeAbs; $('#set-rest-abs-val').textContent = s.restTimeAbs+'s';
+  $('#set-nbsets-abs').value = s.setsTargetAbs;
+  $('#set-sound').checked = s.soundOn;
+
+  $('#accent-picker').innerHTML = ACCENT_CHOICES.map(c=>`<button class="color-dot ${c===s.accent?'sel':''}" style="background:${c}" data-c="${c}"></button>`).join('');
+  $all('#accent-picker .color-dot').forEach(b=> b.onclick = ()=> patchSettings({accent:b.dataset.c}));
+
+  $('#storage-desc').textContent = USE_SUPABASE ? 'Synchronisé avec Supabase' : 'Stockage local uniquement (ce navigateur)';
+  const pill = $('#storage-pill');
+  pill.className = 'status-pill ' + (USE_SUPABASE?'cloud':'local');
+  pill.textContent = USE_SUPABASE ? '☁️ Cloud' : '📱 Local';
+}
+
+// ---------------------------------------------------------------
+// 11. NAVIGATION / SHEETS
+// ---------------------------------------------------------------
+function showTab(name){
+  $all('.tab').forEach(t=> t.classList.remove('active'));
+  $('#tab-'+name).classList.add('active');
+  $all('.nav-btn').forEach(b=> b.classList.toggle('active', b.dataset.tab===name));
+}
+function openSheet(id){
+  $('#overlay-bg').classList.add('show');
+  $(id).classList.add('show');
+}
+function closeSheets(){
+  $('#overlay-bg').classList.remove('show');
+  $all('.sheet').forEach(s=> s.classList.remove('show'));
+}
+
+// ---------------------------------------------------------------
+// 12. PROFILS
+// ---------------------------------------------------------------
+async function switchProfile(id){
+  const p = state.profiles.find(pp=>pp.id===id);
+  if(!p) return;
+  state.currentProfile = p;
+  await loadProfileData();
+  renderAll();
+  closeSheets();
+}
+
+function renderProfileSwitchList(){
+  $('#profile-switch-list').innerHTML = state.profiles.map(p=>`
+    <div class="profile-list-item" data-go="${p.id}">
+      <span class="avatar">${p.emoji||'💪'}</span>
+      <span class="nm">${p.name}</span>
+      ${state.currentProfile && p.id===state.currentProfile.id ? '<span class="badge ready">actif</span>' : ''}
+    </div>`).join('');
+  $all('#profile-switch-list [data-go]').forEach(d=> d.onclick = ()=> switchProfile(d.dataset.go));
+}
+
+function openProfileSheet(forceCreate){
+  renderProfileSwitchList();
+  if(forceCreate || state.profiles.length===0){ openNewProfileSheet(); return; }
+  openSheet('#sheet-profile');
+}
+
+let selectedEmoji = EMOJI_CHOICES[0];
+function openNewProfileSheet(){
+  selectedEmoji = EMOJI_CHOICES[0];
+  $('#np-name').value = '';
+  $('#np-emoji').innerHTML = EMOJI_CHOICES.map(e=>`<button class="${e===selectedEmoji?'sel':''}" data-e="${e}">${e}</button>`).join('');
+  $all('#np-emoji button').forEach(b=> b.onclick = ()=>{
+    selectedEmoji = b.dataset.e;
+    $all('#np-emoji button').forEach(x=>x.classList.remove('sel'));
+    b.classList.add('sel');
+  });
+  openSheet('#sheet-new-profile');
+}
+
+async function deleteProfileFlow(id){
+  if(state.profiles.length<=1){ toast('Impossible de supprimer le dernier profil'); return; }
+  if(!confirm('Supprimer ce profil et toutes ses données ?')) return;
+  await DB.deleteProfile(id);
+  state.profiles = await DB.listProfiles();
+  if(state.currentProfile.id===id){ state.currentProfile = state.profiles[0]; await loadProfileData(); }
+  renderAll();
+}
+
+// ---------------------------------------------------------------
+// 13. EDIT LEVEL (progression manuelle)
+// ---------------------------------------------------------------
+function openEditLevel(key, kind){
+  const def = LAFAY_EXERCISES.find(e=>e.key===key);
+  state.editingLevel = {key, kind};
+  $('#el-title').textContent = 'Modifier — ' + (def?def.name:key);
+  $('#el-value').value = state.progress[key] ? state.progress[key].current_reps : def.start;
+  openSheet('#sheet-edit-level');
+}
+
+// ---------------------------------------------------------------
+// 14. NOUVELLE SEANCE — SELECTION
+// ---------------------------------------------------------------
+function openNewSessionSheet(){
+  const s = getSettings();
+  $('#ns-list').innerHTML = LAFAY_EXERCISES.map(ex=>{
+    const prog = state.progress[ex.key];
+    const suggestIncrease = !!prog.ready;
+    return `
+      <div class="exo-select" data-key="${ex.key}">
+        <input type="checkbox" checked>
+        <div class="info">
+          <div class="n">${ex.emoji} ${ex.name}</div>
+          <div class="l">Niveau actuel : ${prog.current_reps} reps ${prog.ready?'· ✅ prêt à monter':''}</div>
+        </div>
+        <div class="dir-toggle">
+          <button data-dir="same" class="${!suggestIncrease?'on':''}">Même</button>
+          <button data-dir="increase" class="${suggestIncrease?'on':''}">+1</button>
+        </div>
+      </div>`;
+  }).join('');
+  $all('#ns-list .dir-toggle button').forEach(btn=>{
+    btn.onclick = ()=>{
+      const wrap = btn.closest('.dir-toggle');
+      wrap.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+      btn.classList.add('on');
+    };
+  });
+  openSheet('#sheet-new-session');
+}
+
+function collectSessionConfig(){
+  const items = [];
+  $all('#ns-list .exo-select').forEach(row=>{
+    const cb = row.querySelector('input[type=checkbox]');
+    if(!cb.checked) return;
+    const key = row.dataset.key;
+    const dir = row.querySelector('.dir-toggle button.on').dataset.dir;
+    items.push({key, direction: dir});
+  });
+  return items;
+}
+
+// ---------------------------------------------------------------
+// 15. NOUVELLE SEANCE ABDOS — SELECTION
+// ---------------------------------------------------------------
+function openNewAbsSheet(){
+  $('#nabs-list').innerHTML = ABS_EXERCISES.map(ex=>`
+    <div class="exo-select" data-key="${ex.key}">
+      <input type="checkbox" checked>
+      <div class="info">
+        <div class="n">${ex.emoji} ${ex.name}</div>
+        <div class="l">Unité : ${ex.unit==='sec'?'secondes':'répétitions'}</div>
+      </div>
+    </div>`).join('');
+  openSheet('#sheet-new-abs');
+}
+function collectAbsConfig(){
+  const items = [];
+  $all('#nabs-list .exo-select').forEach(row=>{
+    const cb = row.querySelector('input[type=checkbox]');
+    if(cb.checked) items.push({key: row.dataset.key});
+  });
+  return items;
+}
+
+// ---------------------------------------------------------------
+// 16. WORKOUT RUNNER (état + logique)
+// ---------------------------------------------------------------
+const ANIM_SVG = {
+  push: `<svg viewBox="0 0 150 150"><g class="rig"><circle class="pulse-dot" cx="75" cy="35" r="12" fill="var(--push)"/><rect x="40" y="50" width="70" height="10" rx="5" fill="var(--push)" opacity=".85"/><rect x="35" y="60" width="10" height="45" rx="5" fill="var(--push)" opacity=".55"/><rect x="105" y="60" width="10" height="45" rx="5" fill="var(--push)" opacity=".55"/></g></svg>`,
+  pull: `<svg viewBox="0 0 150 150"><rect x="20" y="20" width="110" height="8" rx="4" fill="var(--pull)" opacity=".4"/><g class="rig"><circle class="pulse-dot" cx="75" cy="45" r="12" fill="var(--pull)"/><rect x="70" y="55" width="10" height="55" rx="5" fill="var(--pull)" opacity=".85"/><rect x="45" y="30" width="8" height="35" rx="4" fill="var(--pull)" opacity=".55"/><rect x="97" y="30" width="8" height="35" rx="4" fill="var(--pull)" opacity=".55"/></g></svg>`,
+  legs: `<svg viewBox="0 0 150 150"><g class="rig"><circle class="pulse-dot" cx="75" cy="30" r="12" fill="var(--legs)"/><rect x="65" y="42" width="20" height="35" rx="8" fill="var(--legs)" opacity=".85"/><rect x="52" y="75" width="14" height="40" rx="6" fill="var(--legs)" opacity=".55"/><rect x="84" y="75" width="14" height="40" rx="6" fill="var(--legs)" opacity=".55"/></g></svg>`,
+  abs: `<svg viewBox="0 0 150 150"><g class="rig"><circle class="pulse-dot" cx="45" cy="75" r="12" fill="var(--abs)"/><rect x="55" y="68" width="55" height="14" rx="7" fill="var(--abs)" opacity=".8"/></g></svg>`,
+};
+
+function runnerLetsGo(kind, items){
+  const s = getSettings();
+  const setsTarget = kind==='lafay' ? s.setsTarget : s.setsTargetAbs;
+  const restTime = kind==='lafay' ? s.restTime : s.restTimeAbs;
+
+  const exercises = items.map(it=>{
+    if(kind==='lafay'){
+      const def = LAFAY_EXERCISES.find(e=>e.key===it.key);
+      const prog = state.progress[it.key];
+      const target = prog.current_reps + (it.direction==='increase' ? 1 : 0);
+      return {key:it.key, def, target_reps: target, direction: it.direction, sets: []};
+    } else {
+      const def = ABS_EXERCISES.find(e=>e.key===it.key);
+      return {key:it.key, def, sets: []};
+    }
+  });
+
+  state.activeSession = {
+    kind, exercises, setsTarget, restTime,
+    exoIdx: 0, setIdx: 0,
+    startedAt: new Date().toISOString(),
+    paused: false,
+    restTimer: null, restRemaining: 0, warned:false,
+  };
+  closeSheets();
+  $('#workout-overlay').classList.add('show');
+  $('#wo-header-label').textContent = kind==='lafay' ? 'Séance Lafay' : 'Séance Abdos';
+  renderRunnerSetView();
+}
+
+function currentExo(){ return state.activeSession.exercises[state.activeSession.exoIdx]; }
+
+function renderRunnerSetView(){
+  const as = state.activeSession;
+  const exo = currentExo();
+  $('#wo-set-view').style.display='flex';
+  $('#wo-rest-view').style.display='none';
+  $('#wo-actions-set').style.display='block';
+  $('#wo-actions-rest').style.display='none';
+
+  $('#wo-exo-name').textContent = exo.def.emoji + ' ' + exo.def.name;
+  $('#wo-set-count').textContent = `Série ${as.setIdx+1}/${as.setsTarget}`;
+
+  const target = as.kind==='lafay' ? exo.target_reps : (exo.def.unit==='sec' ? 30 : 15);
+  $('#wo-target').textContent = target;
+  document.querySelector('.rep-target small').textContent = as.kind==='lafay' ? 'répétitions visées' : (exo.def.unit==='sec' ? 'secondes visées' : 'répétitions visées');
+  $('#wo-rep-input').value = target;
+
+  const animKind = as.kind==='lafay' ? exo.def.group : 'abs';
+  $('#wo-anim').innerHTML = ANIM_SVG[animKind] || ANIM_SVG.abs;
+  $('#wo-anim').className = 'exo-anim ' + (animKind==='legs' ? 'anim-legs' : animKind==='pull' ? 'anim-pull' : 'anim-push');
+
+  const totalSteps = as.exercises.length * as.setsTarget;
+  const doneSteps = as.exoIdx*as.setsTarget + as.setIdx;
+  $('#wo-progress-fill').style.width = Math.round(100*doneSteps/totalSteps)+'%';
+}
+
+function wireStepper(inputSel, minusSel, plusSel, min){
+  $(minusSel).onclick = ()=>{ const i=$(inputSel); i.value = Math.max(min, (+i.value||0)-1); };
+  $(plusSel).onclick = ()=>{ const i=$(inputSel); i.value = (+i.value||0)+1; };
+}
+
+function validateSet(){
+  const as = state.activeSession;
+  const exo = currentExo();
+  const value = Math.max(0, +$('#wo-rep-input').value || 0);
+  if(as.kind==='lafay'){
+    const success = value >= exo.target_reps;
+    exo.sets.push({reps:value, success});
+  } else {
+    exo.sets.push({value});
+  }
+  as.setIdx++;
+  if(as.setIdx >= as.setsTarget){
+    as.setIdx = 0; as.exoIdx++;
+  }
+  if(as.exoIdx >= as.exercises.length){
+    finishRunner();
+    return;
+  }
+  startRest();
+}
+
+function startRest(){
+  const as = state.activeSession;
+  as.restRemaining = as.restTime;
+  as.warned = false;
+  $('#wo-set-view').style.display='none';
+  $('#wo-rest-view').style.display='flex';
+  $('#wo-actions-set').style.display='none';
+  $('#wo-actions-rest').style.display='flex';
+  const nextExo = currentExo();
+  $('#rest-next-label').textContent = `Prochain : ${nextExo.def.emoji} ${nextExo.def.name} — série ${as.setIdx+1}/${as.setsTarget}`;
+  updateRestRing();
+  clearInterval(as.restTimer);
+  as.restTimer = setInterval(tickRest, 1000);
+}
+
+function updateRestRing(){
+  const as = state.activeSession;
+  $('#rest-seconds').textContent = as.restRemaining;
+  const circ = 2*Math.PI*88;
+  const frac = Math.max(0, as.restRemaining/as.restTime);
+  const fg = $('#rest-ring-fg');
+  fg.setAttribute('stroke-dasharray', circ);
+  fg.setAttribute('stroke-dashoffset', circ*(1-frac));
+}
+
+function tickRest(){
+  const as = state.activeSession;
+  if(as.paused) return;
+  as.restRemaining--;
+  updateRestRing();
+  if(as.restRemaining === 5 && !as.warned){ as.warned = true; playWarnBeep(); }
+  if(as.restRemaining <= 0){
+    clearInterval(as.restTimer);
+    playGoBeep();
+    renderRunnerSetView();
+  }
+}
+
+function skipRest(){
+  const as = state.activeSession;
+  clearInterval(as.restTimer);
+  renderRunnerSetView();
+}
+function addRestTime(){
+  const as = state.activeSession;
+  as.restRemaining += 15;
+  updateRestRing();
+}
+
+function pauseRunner(){
+  state.activeSession.paused = true;
+  $('#pause-overlay').classList.add('show');
+}
+function resumeRunner(){
+  state.activeSession.paused = false;
+  $('#pause-overlay').classList.remove('show');
+}
+function abandonRunner(){
+  if(!confirm('Abandonner la séance en cours ? Rien ne sera enregistré.')) return;
+  clearInterval(state.activeSession.restTimer);
+  state.activeSession = null;
+  $('#pause-overlay').classList.remove('show');
+  $('#workout-overlay').classList.remove('show');
+}
+
+function finishRunner(){
+  const as = state.activeSession;
+  const durationSec = Math.round((Date.now() - new Date(as.startedAt).getTime())/1000);
+  as.durationSec = durationSec;
+  $('#workout-overlay').classList.remove('show');
+  renderSummary();
+  openSheet('#sheet-summary');
+}
+
+function renderSummary(){
+  const as = state.activeSession;
+  $('#summary-content').innerHTML = as.exercises.map(exo=>{
+    if(as.kind==='lafay'){
+      const allSuccess = exo.sets.length===as.setsTarget && exo.sets.every(s=>s.success);
+      return `
+        <div class="sum-exo">
+          <div class="head">
+            <b>${exo.def.emoji} ${exo.def.name}</b>
+            ${allSuccess ? '<span class="badge ready">✅ validé</span>' : '<span class="badge progress">à retravailler</span>'}
+          </div>
+          <div class="small muted">Objectif : ${exo.target_reps} reps × ${as.setsTarget}</div>
+          <div class="set-pill-row">${exo.sets.map(s=>`<span class="set-pill ${s.success?'ok':'ko'}">${s.reps}</span>`).join('')}</div>
+        </div>`;
+    } else {
+      return `
+        <div class="sum-exo">
+          <div class="head"><b>${exo.def.emoji} ${exo.def.name}</b></div>
+          <div class="set-pill-row">${exo.sets.map(s=>`<span class="set-pill ok">${s.value}${exo.def.unit==='sec'?'s':''}</span>`).join('')}</div>
+        </div>`;
+    }
+  }).join('');
+}
+
+async function saveSession(){
+  const as = state.activeSession;
+  const session = {
+    profile_id: state.currentProfile.id,
+    type: as.kind,
+    started_at: as.startedAt,
+    ended_at: new Date().toISOString(),
+    duration_sec: as.durationSec,
+    exercises: as.exercises.map(e=>({
+      key:e.key,
+      target_reps: e.target_reps,
+      direction: e.direction,
+      sets: e.sets
+    })),
+  };
+  await DB.addSession(session);
+
+  if(as.kind==='lafay'){
+    for(const exo of as.exercises){
+      const allSuccess = exo.sets.length===as.setsTarget && exo.sets.every(s=>s.success);
+      if(allSuccess){
+        const row = await DB.upsertProgress(state.currentProfile.id, exo.key, {current_reps: exo.target_reps, ready:true});
+        state.progress[exo.key] = row;
+      } else {
+        const row = await DB.upsertProgress(state.currentProfile.id, exo.key, {current_reps: state.progress[exo.key].current_reps, ready:false});
+        state.progress[exo.key] = row;
+      }
+    }
+  }
+
+  state.sessions = await DB.listSessions(state.currentProfile.id);
+  computeAbsProgress();
+  state.activeSession = null;
+  closeSheets();
+  renderAll();
+  toast('Séance enregistrée 🎉');
+}
+
+// ---------------------------------------------------------------
+// 17. EXPORT / RESET
+// ---------------------------------------------------------------
+function exportData(){
+  const payload = {
+    profile: state.currentProfile,
+    progress: state.progress,
+    sessions: state.sessions,
+    exported_at: new Date().toISOString(),
+  };
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `lafay-body-${state.currentProfile.name}-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function resetProgressFlow(){
+  if(!confirm('Réinitialiser tous les niveaux de progression Lafay pour ce profil ?')) return;
+  for(const ex of LAFAY_EXERCISES){
+    const row = await DB.upsertProgress(state.currentProfile.id, ex.key, {current_reps: ex.start, ready:false});
+    state.progress[ex.key] = row;
+  }
+  renderAll();
+  toast('Progression réinitialisée');
+}
+
+// ---------------------------------------------------------------
+// 18. RENDER ALL
+// ---------------------------------------------------------------
+function renderAll(){
+  renderHeader();
+  renderRecap();
+  renderSeances();
+  renderAbdos();
+  renderReglages();
+}
+
+// ---------------------------------------------------------------
+// 19. EVENTS
+// ---------------------------------------------------------------
+function wireEvents(){
+  $all('.nav-btn').forEach(b=> b.onclick = ()=> showTab(b.dataset.tab));
+  $('#fab-quick-start').onclick = ()=>{ showTab('seances'); openNewSessionSheet(); };
+  $('#overlay-bg').onclick = closeSheets;
+
+  $('#btn-open-profile').onclick = ()=> openProfileSheet(false);
+  $('#btn-create-profile-inline').onclick = openNewProfileSheet;
+  $('#np-confirm').onclick = async ()=>{
+    const name = $('#np-name').value.trim();
+    if(!name){ toast('Entre un prénom'); return; }
+    const p = await DB.createProfile(name, selectedEmoji);
+    state.profiles = await DB.listProfiles();
+    state.currentProfile = p;
+    await loadProfileData();
+    renderAll();
+    closeSheets();
+    toast('Profil créé 👋');
+  };
+  $('#btn-add-profile').onclick = openNewProfileSheet;
+
+  $('#btn-new-session').onclick = openNewSessionSheet;
+  $('#ns-start').onclick = ()=>{
+    const items = collectSessionConfig();
+    if(items.length===0){ toast('Sélectionne au moins un exercice'); return; }
+    runnerLetsGo('lafay', items);
+  };
+
+  $('#btn-new-abs').onclick = openNewAbsSheet;
+  $('#nabs-start').onclick = ()=>{
+    const items = collectAbsConfig();
+    if(items.length===0){ toast('Sélectionne au moins un exercice'); return; }
+    runnerLetsGo('abdos', items);
+  };
+
+  wireStepper('#wo-rep-input','#wo-rep-minus','#wo-rep-plus', 0);
+  $('#wo-validate-set').onclick = validateSet;
+  $('#wo-skip-rest').onclick = skipRest;
+  $('#wo-add-rest').onclick = addRestTime;
+  $('#wo-pause').onclick = pauseRunner;
+  $('#wo-quit').onclick = ()=>{ pauseRunner(); };
+  $('#btn-resume-session').onclick = resumeRunner;
+  $('#btn-abandon-session').onclick = abandonRunner;
+  $('#summary-save').onclick = saveSession;
+
+  $('#btn-toggle-compare').onclick = ()=>{ state.compareMode = !state.compareMode; renderCompareChips(); };
+
+  wireStepper('#el-value','#el-minus','#el-plus', 0);
+  $('#el-save').onclick = async ()=>{
+    const {key} = state.editingLevel;
+    const value = Math.max(0, +$('#el-value').value || 0);
+    const row = await DB.upsertProgress(state.currentProfile.id, key, {current_reps:value, ready:false});
+    state.progress[key] = row;
+    closeSheets();
+    renderAll();
+    toast('Niveau mis à jour');
+  };
+
+  $('#set-rest').oninput = (e)=>{ $('#set-rest-val').textContent = e.target.value+'s'; };
+  $('#set-rest').onchange = (e)=> patchSettings({restTime:+e.target.value});
+  $('#set-nbsets').onchange = (e)=> patchSettings({setsTarget: Math.max(1,+e.target.value||6)});
+  $('#set-rest-abs').oninput = (e)=>{ $('#set-rest-abs-val').textContent = e.target.value+'s'; };
+  $('#set-rest-abs').onchange = (e)=> patchSettings({restTimeAbs:+e.target.value});
+  $('#set-nbsets-abs').onchange = (e)=> patchSettings({setsTargetAbs: Math.max(1,+e.target.value||3)});
+  $('#set-sound').onchange = (e)=> patchSettings({soundOn: e.target.checked});
+
+  $('#btn-export').onclick = exportData;
+  $('#btn-reset-progress').onclick = resetProgressFlow;
+}
+
+// ---------------------------------------------------------------
+// 20. BOOT
+// ---------------------------------------------------------------
+async function boot(){
+  applyAccent(DEFAULT_SETTINGS.accent);
+  wireEvents();
+  try{
+    state.profiles = await DB.listProfiles();
+  }catch(e){
+    console.error(e);
+    toast('Erreur de connexion — mode local utilisé');
+    USE_SUPABASE = false;
+    state.profiles = loadLocalDB().profiles;
+  }
+  if(state.profiles.length===0){
+    renderHeader();
+    openProfileSheet(true);
+    return;
+  }
+  const savedId = localStorage.getItem('lafay_current_profile');
+  state.currentProfile = state.profiles.find(p=>p.id===savedId) || state.profiles[0];
+  await loadProfileData();
+  renderAll();
+}
+
+boot();
+</script>
+</body>
+</html>
