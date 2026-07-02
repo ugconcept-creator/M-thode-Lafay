@@ -499,6 +499,10 @@ input[type=range]{accent-color:var(--accent);width:110px;}
           <div class="row"><input type="range" id="set-rest" min="10" max="240" step="5"><span id="set-rest-val" class="tiny" style="width:44px;text-align:right"></span></div>
         </div>
         <div class="settings-row">
+          <div><div class="lbl">Repos entre exercices</div><div class="desc">En changeant d'exercice</div></div>
+          <div class="row"><input type="range" id="set-rest-exo" min="10" max="300" step="5"><span id="set-rest-exo-val" class="tiny" style="width:44px;text-align:right"></span></div>
+        </div>
+        <div class="settings-row">
           <div><div class="lbl">Séries par exercice</div></div>
           <input type="number" class="num-input" id="set-nbsets" min="1" max="12">
         </div>
@@ -511,6 +515,10 @@ input[type=range]{accent-color:var(--accent);width:110px;}
           <div class="row"><input type="range" id="set-rest-abs" min="10" max="180" step="5"><span id="set-rest-abs-val" class="tiny" style="width:44px;text-align:right"></span></div>
         </div>
         <div class="settings-row">
+          <div><div class="lbl">Repos entre exercices</div><div class="desc">En changeant d'exercice</div></div>
+          <div class="row"><input type="range" id="set-rest-exo-abs" min="10" max="300" step="5"><span id="set-rest-exo-abs-val" class="tiny" style="width:44px;text-align:right"></span></div>
+        </div>
+        <div class="settings-row">
           <div><div class="lbl">Séries par exercice</div></div>
           <input type="number" class="num-input" id="set-nbsets-abs" min="1" max="12">
         </div>
@@ -521,6 +529,10 @@ input[type=range]{accent-color:var(--accent);width:110px;}
         <div class="settings-row">
           <div><div class="lbl">Bip sonore</div><div class="desc">5 sec avant la fin du repos</div></div>
           <label class="switch"><input type="checkbox" id="set-sound"><span class="track"></span><span class="thumb"></span></label>
+        </div>
+        <div class="settings-row">
+          <div><div class="lbl">Tester le son</div><div class="desc">Vérifie que le bip s'entend bien</div></div>
+          <button class="btn btn-ghost btn-sm" id="btn-test-sound">🔊 Tester</button>
         </div>
         <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:10px">
           <div class="lbl">Couleur d'accent</div>
@@ -631,7 +643,7 @@ input[type=range]{accent-color:var(--accent);width:110px;}
     </div>
 
     <div class="wo-body" id="wo-rest-view" style="display:none">
-      <div class="wo-exo-name">Repos</div>
+      <div class="wo-exo-name" id="wo-rest-label">Repos</div>
       <div class="rest-ring-wrap">
         <svg viewBox="0 0 200 200">
           <circle cx="100" cy="100" r="88" stroke="var(--card-2)" stroke-width="12" fill="none"/>
@@ -687,8 +699,8 @@ input[type=range]{accent-color:var(--accent);width:110px;}
 // 0. CONFIG SUPABASE — remplace ces deux valeurs après avoir créé
 //    ton projet sur https://supabase.com puis exécuté schema.sql
 // ---------------------------------------------------------------
-const SUPABASE_URL = "https://pbfsiogaflwuvdhrmewv.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZnNpb2dhZmx3dXZkaHJtZXd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5NTY2NTcsImV4cCI6MjA5ODUzMjY1N30.CvOXH_7m6fAXv7IS-fd68rGEsh4J0NY1YNYihZmDmM4";
+const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";
 
 let supa = null;
 let USE_SUPABASE = false;
@@ -725,6 +737,8 @@ const ABS_EXERCISES = [
 const DEFAULT_SETTINGS = {
   restTime: 90,
   restTimeAbs: 45,
+  restBetweenExercises: 120,
+  restBetweenExercisesAbs: 60,
   setsTarget: 6,
   setsTargetAbs: 3,
   soundOn: true,
@@ -831,6 +845,16 @@ const DB = {
     db.sessions.push(session);
     saveLocalDB(db);
     return session;
+  },
+  async deleteSession(id){
+    if(USE_SUPABASE){
+      const {error} = await supa.from('sessions').delete().eq('id', id);
+      if(error) throw error;
+      return;
+    }
+    const db = loadLocalDB();
+    db.sessions = db.sessions.filter(s=>s.id!==id);
+    saveLocalDB(db);
   }
 };
 
@@ -891,10 +915,19 @@ function applyAccent(color){
 }
 
 // beep via Web Audio (aucun fichier externe nécessaire)
+// iOS/Safari exige que l'AudioContext soit créé/repris pendant un vrai
+// geste utilisateur (tap), sinon les sons déclenchés depuis un minuteur
+// restent silencieux. On "débloque" donc l'audio dès le premier tap.
 let audioCtx = null;
-function beep(freq, dur){
+function unlockAudio(){
   try{
     if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+  }catch(e){ /* audio indisponible */ }
+}
+function beep(freq, dur){
+  try{
+    unlockAudio();
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = 'sine'; osc.frequency.value = freq;
@@ -907,6 +940,7 @@ function beep(freq, dur){
 }
 function playWarnBeep(){ if(getSettings().soundOn){ beep(880,150); setTimeout(()=>beep(880,150),220); } }
 function playGoBeep(){ if(getSettings().soundOn){ beep(1320,220); } }
+function playTestSound(){ beep(880,150); setTimeout(()=>beep(880,150),220); setTimeout(()=>beep(1320,220),650); }
 
 function getSettings(){
   return state.currentProfile ? {...DEFAULT_SETTINGS, ...(state.currentProfile.settings||{})} : DEFAULT_SETTINGS;
@@ -1164,7 +1198,10 @@ function renderSeancesHistory(){
             <div class="sh-title">${fmtDate(s.started_at)} ${names}</div>
             <div class="sh-sub">${(s.exercises||[]).length} exercice(s) ${dur?'· '+dur:''}</div>
           </div>
-          <span class="faint">▾</span>
+          <div class="row" style="gap:6px">
+            <button class="icon-btn del-session-btn" data-id="${s.id}" style="width:32px;height:32px;font-size:13px">🗑</button>
+            <span class="faint">▾</span>
+          </div>
         </summary>
         <div class="sh-detail">
           ${(s.exercises||[]).map(e=>{
@@ -1177,6 +1214,26 @@ function renderSeancesHistory(){
         </div>
       </details>`;
   }).join('');
+  wireDeleteButtons(wrap);
+}
+
+function wireDeleteButtons(scope){
+  scope.querySelectorAll('.del-session-btn').forEach(btn=>{
+    btn.onclick = (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      deleteSessionFlow(btn.dataset.id);
+    };
+  });
+}
+
+async function deleteSessionFlow(id){
+  if(!confirm('Supprimer cette séance ? Cette action est définitive et ne modifie pas ton niveau de progression actuel.')) return;
+  await DB.deleteSession(id);
+  state.sessions = await DB.listSessions(state.currentProfile.id);
+  computeAbsProgress();
+  renderAll();
+  toast('Séance supprimée');
 }
 
 // ---------------------------------------------------------------
@@ -1201,7 +1258,10 @@ function renderAbsHistory(){
             <div class="sh-title">${fmtDate(s.started_at)} ${names}</div>
             <div class="sh-sub">${(s.exercises||[]).length} exercice(s)</div>
           </div>
-          <span class="faint">▾</span>
+          <div class="row" style="gap:6px">
+            <button class="icon-btn del-session-btn" data-id="${s.id}" style="width:32px;height:32px;font-size:13px">🗑</button>
+            <span class="faint">▾</span>
+          </div>
         </summary>
         <div class="sh-detail">
           ${(s.exercises||[]).map(e=>{
@@ -1214,6 +1274,7 @@ function renderAbsHistory(){
         </div>
       </details>`;
   }).join('');
+  wireDeleteButtons(wrap);
 }
 
 // ---------------------------------------------------------------
@@ -1234,8 +1295,10 @@ function renderReglages(){
   $all('#settings-profiles [data-del]').forEach(b=> b.onclick = ()=> deleteProfileFlow(b.dataset.del));
 
   $('#set-rest').value = s.restTime; $('#set-rest-val').textContent = s.restTime+'s';
+  $('#set-rest-exo').value = s.restBetweenExercises; $('#set-rest-exo-val').textContent = s.restBetweenExercises+'s';
   $('#set-nbsets').value = s.setsTarget;
   $('#set-rest-abs').value = s.restTimeAbs; $('#set-rest-abs-val').textContent = s.restTimeAbs+'s';
+  $('#set-rest-exo-abs').value = s.restBetweenExercisesAbs; $('#set-rest-exo-abs-val').textContent = s.restBetweenExercisesAbs+'s';
   $('#set-nbsets-abs').value = s.setsTargetAbs;
   $('#set-sound').checked = s.soundOn;
 
@@ -1406,6 +1469,7 @@ function runnerLetsGo(kind, items){
   const s = getSettings();
   const setsTarget = kind==='lafay' ? s.setsTarget : s.setsTargetAbs;
   const restTime = kind==='lafay' ? s.restTime : s.restTimeAbs;
+  const restBetweenExercises = kind==='lafay' ? s.restBetweenExercises : s.restBetweenExercisesAbs;
 
   const exercises = items.map(it=>{
     if(kind==='lafay'){
@@ -1420,11 +1484,11 @@ function runnerLetsGo(kind, items){
   });
 
   state.activeSession = {
-    kind, exercises, setsTarget, restTime,
+    kind, exercises, setsTarget, restTime, restBetweenExercises,
     exoIdx: 0, setIdx: 0,
     startedAt: new Date().toISOString(),
     paused: false,
-    restTimer: null, restRemaining: 0, warned:false,
+    restTimer: null, restRemaining: 0, restDuration: restTime, warned:false,
   };
   closeSheets();
   $('#workout-overlay').classList.add('show');
@@ -1475,26 +1539,33 @@ function validateSet(){
     exo.sets.push({value});
   }
   as.setIdx++;
+  let exerciseChanged = false;
   if(as.setIdx >= as.setsTarget){
     as.setIdx = 0; as.exoIdx++;
+    exerciseChanged = true;
   }
   if(as.exoIdx >= as.exercises.length){
     finishRunner();
     return;
   }
-  startRest();
+  startRest(exerciseChanged);
 }
 
-function startRest(){
+function startRest(exerciseChanged){
   const as = state.activeSession;
-  as.restRemaining = as.restTime;
+  const duration = exerciseChanged ? as.restBetweenExercises : as.restTime;
+  as.restRemaining = duration;
+  as.restDuration = duration;
   as.warned = false;
   $('#wo-set-view').style.display='none';
   $('#wo-rest-view').style.display='flex';
   $('#wo-actions-set').style.display='none';
   $('#wo-actions-rest').style.display='flex';
   const nextExo = currentExo();
-  $('#rest-next-label').textContent = `Prochain : ${nextExo.def.emoji} ${nextExo.def.name} — série ${as.setIdx+1}/${as.setsTarget}`;
+  $('#wo-rest-label').textContent = exerciseChanged ? 'Changement d\'exercice' : 'Repos';
+  $('#rest-next-label').textContent = exerciseChanged
+    ? `Prépare-toi : ${nextExo.def.emoji} ${nextExo.def.name}`
+    : `Prochain : ${nextExo.def.emoji} ${nextExo.def.name} — série ${as.setIdx+1}/${as.setsTarget}`;
   updateRestRing();
   clearInterval(as.restTimer);
   as.restTimer = setInterval(tickRest, 1000);
@@ -1504,7 +1575,7 @@ function updateRestRing(){
   const as = state.activeSession;
   $('#rest-seconds').textContent = as.restRemaining;
   const circ = 2*Math.PI*88;
-  const frac = Math.max(0, as.restRemaining/as.restTime);
+  const frac = Math.max(0, as.restRemaining/as.restDuration);
   const fg = $('#rest-ring-fg');
   fg.setAttribute('stroke-dasharray', circ);
   fg.setAttribute('stroke-dashoffset', circ*(1-frac));
@@ -1531,6 +1602,7 @@ function skipRest(){
 function addRestTime(){
   const as = state.activeSession;
   as.restRemaining += 15;
+  as.restDuration += 15;
   updateRestRing();
 }
 
@@ -1722,14 +1794,24 @@ function wireEvents(){
 
   $('#set-rest').oninput = (e)=>{ $('#set-rest-val').textContent = e.target.value+'s'; };
   $('#set-rest').onchange = (e)=> patchSettings({restTime:+e.target.value});
+  $('#set-rest-exo').oninput = (e)=>{ $('#set-rest-exo-val').textContent = e.target.value+'s'; };
+  $('#set-rest-exo').onchange = (e)=> patchSettings({restBetweenExercises:+e.target.value});
   $('#set-nbsets').onchange = (e)=> patchSettings({setsTarget: Math.max(1,+e.target.value||6)});
   $('#set-rest-abs').oninput = (e)=>{ $('#set-rest-abs-val').textContent = e.target.value+'s'; };
   $('#set-rest-abs').onchange = (e)=> patchSettings({restTimeAbs:+e.target.value});
+  $('#set-rest-exo-abs').oninput = (e)=>{ $('#set-rest-exo-abs-val').textContent = e.target.value+'s'; };
+  $('#set-rest-exo-abs').onchange = (e)=> patchSettings({restBetweenExercisesAbs:+e.target.value});
   $('#set-nbsets-abs').onchange = (e)=> patchSettings({setsTargetAbs: Math.max(1,+e.target.value||3)});
   $('#set-sound').onchange = (e)=> patchSettings({soundOn: e.target.checked});
+  $('#btn-test-sound').onclick = ()=>{ unlockAudio(); playTestSound(); toast('🔊 Tu devrais entendre 3 bips'); };
 
   $('#btn-export').onclick = exportData;
   $('#btn-reset-progress').onclick = resetProgressFlow;
+
+  // iOS/Safari : le son ne fonctionne qu'après un vrai tap utilisateur.
+  // On débloque l'audio dès la toute première interaction sur la page.
+  document.addEventListener('click', unlockAudio, {once:true});
+  document.addEventListener('touchstart', unlockAudio, {once:true});
 }
 
 // ---------------------------------------------------------------
